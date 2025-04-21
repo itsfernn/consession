@@ -31,7 +31,7 @@
 1. **Clone the repo**
 
    ```bash
-   git clone https://github.com/yourusername/consession.git
+   git clone https://github.com/itsfernnn/consession.git
    cd consession
    ```
 
@@ -41,7 +41,7 @@
    chmod +x consession.sh
    ```
 
-3. **Move to your PATH** (optional)
+3. **Move to your PATH**
 
    ```bash
    mv consession.sh /usr/local/bin/consession
@@ -68,8 +68,9 @@ By default, consession will:
 
 1. Show a fuzzy list of your current tmux sessions.
 2. Allow you to kill (`Ctrl-D`) or rename (`Ctrl-R`) any session.
-3. Press `Zero` (key `0`) to switch to the zoxide directory view and create a new session in a chosen directory.
-4. Attach to or switch to the selected session.
+3. Automatically switches to zoxide view when query does not match any existing session 
+4. Switch back to the session view by pressing `Backspace` on an empty query.
+5. Switch to an existing session or create a new one in the selected directory by pressing `Enter`.
 
 ### Keybindings
 
@@ -77,36 +78,18 @@ By default, consession will:
 | ---------------------- | --------------- |
 | Kill session           | Ctrl-D          |
 | Rename session         | Ctrl-R          |
-| Switch to zoxide view  | 0 (zero)        |
-| Reset to sessions view | Ctrl-A (start)  |
+| Switch to zoxide view  | unique query    |
+| Reset to sessions view | backspace       |
+| create or switch session | enter           |
 
 ---
 
 ## 🛠 Configuration
 
-You can tweak the following variables at the top of the script:
-
-- `rename_session` – the keybinding to rename a session (default: `ctrl-r`).
-- `kill_session` – the keybinding to kill a session (default: `ctrl-d`).
-- `fzf_opts` – customize fzf appearance (preview window size, colors, layout).
-
-Feel free to fork and adjust these settings to fit your workflow!
+`TODO`
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes (`git commit -m 'Add some fooBar'`)
-4. Push to the branch (`git push origin feature/fooBar`)
-5. Open a Pull Request
-
-Please ensure your code follows existing style and includes relevant tests if applicable.
-
----
 
 ## 📄 License
 
