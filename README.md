@@ -1,14 +1,11 @@
 <!-- #host-reference -->
+<h1 align="center">consession</h1>
 <!-- markdownlint-disable-next-line -->
 <p align="center">
   <img width="250" src="./logo.png" alt="consession logo">
 </p>
 
-<h1 align="center">consession</h1>
 
-<div align="center">
-<!-- TODO: shields.id -->
-</div>
 
 ---
 
