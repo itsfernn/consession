@@ -21,6 +21,7 @@
 - **Keybindings** for renaming and killing sessions directly from the fzf interface.
 - **Customizable** appearance and behavior through configuration variables.
 
+![Screenshot of consession](screenshot.png)
 ---
 
 ## 📦 Installation
