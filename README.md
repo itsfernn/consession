@@ -1,7 +1,7 @@
 <!-- #host-reference -->
 <!-- markdownlint-disable-next-line -->
 <p align="center">
-  <img width="160" src="./logo.png" alt="consession logo">
+  <img width="250" src="./logo.png" alt="consession logo">
 </p>
 
 <h1 align="center">consession</h1>
