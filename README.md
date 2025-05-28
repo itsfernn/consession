@@ -21,7 +21,7 @@
 - **Keybindings** for renaming and killing sessions directly from the fzf interface.
 - **Customizable** appearance and behavior through configuration variables.
 
-![Screenshot of consession](screenshot.png)
+![Screenshot of consession](demo.gif)
 ---
 
 ## 📦 Installation
@@ -66,7 +66,7 @@ By default, consession will:
 
 1. Show a fuzzy list of your current tmux sessions.
 2. Allow you to kill (`Ctrl-D`) or rename (`Ctrl-R`) any session.
-3. Automatically switches to zoxide view when query does not match any existing session 
+3. Automatically switches to zoxide view when query does not match any existing session
 4. Switch back to the session view by pressing `Backspace` on an empty query.
 5. Switch to an existing session or create a new one in the selected directory by pressing `Enter`.
 
@@ -99,5 +99,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - Inspired by fzf-tmux workflows
 - Thanks to the maintainers of tmux, fzf, zoxide, and eza
-
-
