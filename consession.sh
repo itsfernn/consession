@@ -27,7 +27,7 @@ kill_key="ctrl-d"
 
 session_info='tmux ls -F "#{session_name} #{session_windows} win [last attached: #{t/p:session_last_attached}]"'
 selected_session='$(echo {} | awk '\''{print $1}'\'')'
-new_session_name='$(zoxide query {}'$trim_known_dirs' | sed '\''s/\ /_/g'\'')'
+new_session_name='$(zoxide query {}'$trim_known_dirs' | sed '\''s/[\ .]/_/g'\'')'
 
 INFO=$session_info'| grep -m1 '$selected_session
 INFO+='|| echo New Session: '$new_session_name
@@ -73,7 +73,7 @@ directory=$(zoxide query "$target")
 zoxide add "$directory" >/dev/null
 
 if ! tmux has-session -t "$target"; then
-    target=$(eval 'echo "$directory" '$trim_known_dirs' | sed '\''s/\ /_/g'\')
+    target=$(eval 'echo "$directory" '$trim_known_dirs' | sed '\''s/[\ .]/_/g'\')
     tmux new-session -d -s "$target" -c "$directory"
 fi
 
