@@ -1,58 +1,84 @@
 #!/bin/bash
 
-rename_session="ctrl-r"
-kill_session="ctrl-d"
+known_dirs=(~/Documents/Projects/ ~/Documents/Uni /home/lukas)
 
-INFO="tmux ls | grep -m1 ^{} "
-INFO+="|| echo New Session: $(basename {} | sed 's/\ /_/g')"
+sorted_dirs=$(printf "%s\n" "${known_dirs[@]}" | xargs -I {} realpath -m {} | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2-)
 
-fzf_opts=("--preview-window=right,50%" "--layout=reverse" "--print-query" "--padding=1" "--info=inline" "--tac" "--scrollbar=▌▐" "--color=16,pointer:9,spinner:92,marker:46" "--pointer= " "--border")
+trim_known_dirs=$(printf "%s\n" "${known_dirs[@]}" | xargs -I {} realpath -m {} | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- | xargs -I {} echo ' | sed '\''s|'{}'/||'\''\' | cat)
 
-SESSIONS="tmux list-sessions | sed -E 's/:.*$//' "
+test='| sed '\''s|^/home/[a-z]*/||'\'
 
-SESSION_VIEW="reload($SESSIONS)"
-SESSION_VIEW+="+change-preview(tmux capture-pane -ep -t {})"
+fzf_args=(
+    '--preview-window=right,50%'
+    '--layout=reverse'
+    '--print-query'
+    '--padding=1'
+    '--info=inline'
+    '--tac'
+    '--scrollbar=▌▐'
+    '--color=16,pointer:9,spinner:92,marker:46'
+    '--pointer= '
+    '--border'
+    '--ansi'
+)
+
+rename_key="ctrl-r"
+kill_key="ctrl-d"
+
+session_info='tmux ls -F "#{session_name} #{session_windows} win [last attached: #{t/p:session_last_attached}]"'
+selected_session='$(echo {} | awk '\''{print $1}'\'')'
+new_session_name='$(zoxide query {}'$trim_known_dirs' | sed '\''s/\ /_/g'\'')'
+
+INFO=$session_info'| grep -m1 '$selected_session
+INFO+='|| echo New Session: '$new_session_name
+
+highlight='sed '\''s/attached/[3m[90mattached[0m/'\'''
+sorted_sessions='tmux list-sessions -F "#{session_last_attached} #{session_name}#{?session_attached, attached,}" | sort -nr | cut -d\  -f2- |'$highlight
+
+SESSION_VIEW="reload($sorted_sessions)"
+SESSION_VIEW+="+change-preview(tmux capture-pane -ep -t $selected_session)"
 SESSION_VIEW+="+change-border-label( 󰍉 ACTIVE TMUX SESSIONS  )"
-SESSION_VIEW+="+change-header(rename: $rename_session, kill: $kill_session)"
+SESSION_VIEW+="+change-header(rename: $rename_key, kill: $kill_key)"
 
-KILL_SESSION_EXEC="tmux kill-session -t {}"
-KILL_SESSION="execute-silent($KILL_SESSION_EXEC)+reload($SESSIONS)"
+kill_selected_session='tmux kill-session -t '$selected_session
+KILL_SESSION="execute-silent($kill_selected_session)+reload($sorted_sessions)"
 
-RENAME_SESSION_EXEC="zsh -c echo | fzf ${fzf_opts[*]} --query {} | xargs tmux rename-session -t {}"
-RENAME_SESSION="execute($RENAME_SESSION_EXEC)+reload($SESSIONS)"
+rename_selected_session="zsh -c echo | fzf ${fzf_args[*]} --query $selected_session | xargs tmux rename-session -t $selected_session"
+RENAME_SESSION="execute($rename_selected_session)+reload($sorted_sessions)"
 
-ZOXIDE_RELOAD="zoxide query -l | sed 's|^/home/[a-z]*/||'"
-ZOXIDE_VIEW="reload($ZOXIDE_RELOAD)"
-ZOXIDE_VIEW+="+change-preview(zoxide query {} | xargs -I {} eza -1 --group-directories-first --color=always --icons {})"
+list_dirs="zoxide query -l | sed 's|^/home/[a-z]*/||'"
+zoxide_preview='zoxide query {} | xargs eza -1 --group-directories-first --color=always --icons'
+ZOXIDE_VIEW="reload($list_dirs)"
+ZOXIDE_VIEW+="+change-preview($zoxide_preview)"
 ZOXIDE_VIEW+="+change-border-label( 󰍉 CHOOSE DIRECTORY   )"
 ZOXIDE_VIEW+="+change-header(enter: create session)"
 
-args=(
-  --bind "start:$SESSION_VIEW"
-  --bind "zero:$ZOXIDE_VIEW"
-  --bind "backward-eof:$SESSION_VIEW"
-  --bind "$kill_session:$KILL_SESSION"
-  --bind "$rename_session:$RENAME_SESSION"
+bindings=(
+    --bind "start:$SESSION_VIEW"
+    --bind "zero:$ZOXIDE_VIEW"
+    --bind "backward-eof:$SESSION_VIEW"
+    --bind "$kill_key:$KILL_SESSION"
+    --bind "$rename_key:$RENAME_SESSION"
 )
 
-RESULT=$(fzf "${fzf_opts[@]}" "${args[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
+selection=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
 
-target=$(echo "$RESULT" | tr -d '\n')
+target=$(echo "$selection" | tr -d '\n' | awk '{print $1}')
 
 if [[ -z "$target" ]]; then
-  exit 0
+    exit 0
 fi
 
 directory=$(zoxide query "$target")
-target=$(basename "$target" | sed 's/\ /_/g')
+zoxide add "$directory" >/dev/null
 
 if ! tmux has-session -t "$target"; then
-  tmux new-session -d -s "$target" -c "$directory" # "nvim"
-#  tmux new-window -d -t "$target"
+    target=$(eval 'echo "$directory" '$trim_known_dirs' | sed '\''s/\ /_/g'\')
+    tmux new-session -d -s "$target" -c "$directory"
 fi
 
 if [[ -z $TMUX ]]; then
-  tmux attach-session -t "$target"
+    tmux attach-session -t "$target"
 else
-  tmux switch-client -t "$target"
+    tmux switch-client -t "$target"
 fi
