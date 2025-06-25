@@ -1,6 +1,6 @@
 #!/bin/bash
 
-known_dirs=(~/Documents/Projects/ ~/Documents/Uni /home/lukas)
+known_dirs=(~/Documents/Projects/ ~/Documents/Uni /home/lukas ~/.config)
 
 sorted_dirs=$(printf "%s\n" "${known_dirs[@]}" | xargs -I {} realpath -m {} | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2-)
 
@@ -23,7 +23,7 @@ fzf_args=(
 )
 
 rename_key="ctrl-r"
-kill_key="ctrl-d"
+kill_key="ctrl-x"
 
 session_info='tmux ls -F "#{session_name} #{session_windows} win [last attached: #{t/p:session_last_attached}]"'
 selected_session='$(echo {} | awk '\''{print $1}'\'')'
@@ -61,9 +61,7 @@ bindings=(
     --bind "$rename_key:$RENAME_SESSION"
 )
 
-selection=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
-
-target=$(echo "$selection" | tr -d '\n' | awk '{print $1}')
+target=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
 
 if [[ -z "$target" ]]; then
     exit 0
