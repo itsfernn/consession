@@ -1,8 +1,10 @@
 #!/bin/bash
 
-known_dirs=(~/Documents/Projects/ ~/Documents/Uni /home/lukas ~/.config)
-
-trim_known_dirs=$(printf "%s\n" "${known_dirs[@]}" | xargs -I {} realpath -m {} | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- | xargs -I {} echo ' | sed '\''s|'{}'/||'\''\' | cat)
+# create rename dir and file if not exists
+consession_dir="$HOME/.local/share/consession"
+rename_file="$HOME/.local/share/consession/rename.txt"
+mkdir -p "$consession_dir"
+touch "$rename_file"
 
 fzf_args=(
     '--preview-window=right,50%'
@@ -26,8 +28,9 @@ format_session_info='awk '\''{ cmd = '$format_time'; cmd | getline delta; close(
 
 list_sessions='tmux ls -F "#{session_name} #{session_windows} #{session_last_attached}"'
 selected_session='$(echo {} | cut -d\  -f1)'
+selected_session_old_name='$(tmux display-message -p -t '$selected_session' "#{pane_start_path}")'
 
-new_session_name='$(zoxide query {}'$trim_known_dirs' | sed '\''s/[\ .]/_/g'\'')'
+new_session_name='$((grep {} '$rename_file' || echo {}) | tail -n 1 | cut -d\  -f2 | sed '\''s/[\ .]/_/g'\'')'
 
 INFO='si=$('$list_sessions'| grep -m1 '$selected_session');'
 INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
@@ -44,7 +47,9 @@ SESSION_VIEW+="+change-header(rename: $rename_key, kill: $kill_key)"
 kill_selected_session='tmux kill-session -t '$selected_session
 KILL_SESSION="execute-silent($kill_selected_session)+reload($sorted_sessions)"
 
-rename_selected_session="zsh -c echo | fzf ${fzf_args[*]} --query $selected_session | xargs tmux rename-session -t $selected_session"
+rename_selected_session='new_name=$(echo | fzf '${fzf_args[*]}' --query '$selected_session');'
+rename_selected_session+='echo "'$selected_session_old_name' $new_name" >> '$rename_file';'
+rename_selected_session+='tmux rename-session -t '$selected_session' $new_name;'
 RENAME_SESSION="execute($rename_selected_session)+reload($sorted_sessions)"
 
 list_dirs="zoxide query -l | sed 's|^/home/[a-z]*/||'"
@@ -72,7 +77,7 @@ directory=$(zoxide query "$target")
 zoxide add "$directory" >/dev/null
 
 if ! tmux has-session -t "$target"; then
-    target=$(eval 'echo "$directory" '$trim_known_dirs' | sed '\''s/[\ .]/_/g'\')
+    target=$( (grep $directory $rename_file || echo $directory) | tail -n 1 | cut -d' ' -f2 | sed 's/[\ .]/_/g')
     tmux new-session -d -s "$target" -c "$directory"
 fi
 
