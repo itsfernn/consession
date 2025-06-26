@@ -30,7 +30,7 @@ list_sessions='tmux ls -F "#{session_name} #{session_windows} #{session_last_att
 selected_session='$(echo {} | cut -d\  -f1)'
 selected_session_old_name='$(tmux display-message -p -t '$selected_session' "#{pane_start_path}")'
 
-new_session_name='$((grep {} '$rename_file' || echo {}) | tail -n 1 | cut -d\  -f2 | sed '\''s/[\ .]/_/g'\'')'
+new_session_name='$(result=$(grep {} '$rename_file' | tail -n 1 | awk '\''{ print $NF }'\''); ([ -n $result ] && echo $result || echo {}) | sed '\''s/[\ .]/_/g'\'')'
 
 INFO='si=$('$list_sessions'| grep -m1 '$selected_session');'
 INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
@@ -47,7 +47,7 @@ SESSION_VIEW+="+change-header(rename: $rename_key, kill: $kill_key)"
 kill_selected_session='tmux kill-session -t '$selected_session
 KILL_SESSION="execute-silent($kill_selected_session)+reload($sorted_sessions)"
 
-rename_selected_session='new_name=$(echo | fzf '${fzf_args[*]}' --query '$selected_session');'
+rename_selected_session='new_name=$(echo | fzf '${fzf_args[*]}' --query '$selected_session' | sed '\''s/[\ .]/_/g'\'');'
 rename_selected_session+='echo "'$selected_session_old_name' $new_name" >> '$rename_file';'
 rename_selected_session+='tmux rename-session -t '$selected_session' $new_name;'
 RENAME_SESSION="execute($rename_selected_session)+reload($sorted_sessions)"
@@ -77,7 +77,13 @@ directory=$(zoxide query "$target")
 zoxide add "$directory" >/dev/null
 
 if ! tmux has-session -t "$target"; then
-    target=$( (grep $directory $rename_file || echo $directory | sed 's|^/home/[a-z]*/||') | tail -n 1 | cut -d' ' -f2 | sed 's/[\ .]/_/g')
+    matched_name=$(grep "$directory" "$rename_file" | tail -n 1 | awk '{ print $NF }')
+    if [[ -n $matched_name ]]; then
+        target=$matched_name
+    else
+        target=$(echo "$directory" | sed 's|^/home/[a-z]*/||' | sed 's/[\ .]/_/g')
+    fi
+
     tmux new-session -d -s "$target" -c "$directory"
 fi
 
