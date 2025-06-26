@@ -77,7 +77,7 @@ directory=$(zoxide query "$target")
 zoxide add "$directory" >/dev/null
 
 if ! tmux has-session -t "$target"; then
-    target=$( (grep $directory $rename_file || echo $directory) | tail -n 1 | cut -d' ' -f2 | sed 's/[\ .]/_/g')
+    target=$( (grep $directory $rename_file || echo $directory | sed 's|^/home/[a-z]*/||') | tail -n 1 | cut -d' ' -f2 | sed 's/[\ .]/_/g')
     tmux new-session -d -s "$target" -c "$directory"
 fi
 
