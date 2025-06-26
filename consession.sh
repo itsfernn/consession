@@ -2,11 +2,7 @@
 
 known_dirs=(~/Documents/Projects/ ~/Documents/Uni /home/lukas ~/.config)
 
-sorted_dirs=$(printf "%s\n" "${known_dirs[@]}" | xargs -I {} realpath -m {} | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2-)
-
 trim_known_dirs=$(printf "%s\n" "${known_dirs[@]}" | xargs -I {} realpath -m {} | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- | xargs -I {} echo ' | sed '\''s|'{}'/||'\''\' | cat)
-
-test='| sed '\''s|^/home/[a-z]*/||'\'
 
 fzf_args=(
     '--preview-window=right,50%'
@@ -17,7 +13,7 @@ fzf_args=(
     '--tac'
     '--scrollbar=▌▐'
     '--color=16,pointer:9,spinner:92,marker:46'
-    '--pointer= '
+    '--pointer='
     '--border'
     '--ansi'
 )
@@ -25,15 +21,20 @@ fzf_args=(
 rename_key="ctrl-r"
 kill_key="ctrl-x"
 
-session_info='tmux ls -F "#{session_name} #{session_windows} win [last attached: #{t/p:session_last_attached}]"'
-selected_session='$(echo {} | awk '\''{print $1}'\'')'
+format_time='"d=$(($(date +%s)-" $3 ")); d=${d#-}; h=$((d/3600)); m=$(( (d%3600)/60 )); ((h)) && printf \"%dh \" $h; printf \"%dm ago\n\" $m"'
+format_session_info='awk '\''{ cmd = '$format_time'; cmd | getline delta; close(cmd); print $1 ": " delta "; "  $2 " windows " }'\'
+
+list_sessions='tmux ls -F "#{session_name} #{session_windows} #{session_last_attached}"'
+selected_session='$(echo {} | cut -d\  -f1)'
+
 new_session_name='$(zoxide query {}'$trim_known_dirs' | sed '\''s/[\ .]/_/g'\'')'
 
-INFO=$session_info'| grep -m1 '$selected_session
-INFO+='|| echo New Session: '$new_session_name
+INFO='si=$('$list_sessions'| grep -m1 '$selected_session');'
+INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
+INFO+='[ -z "$si" ] && echo New Session: '$new_session_name
 
 highlight='sed '\''s/attached/[3m[90mattached[0m/'\'''
-sorted_sessions='tmux list-sessions -F "#{session_last_attached} #{session_name}#{?session_attached, attached,}" | sort -nr | cut -d\  -f2- |'$highlight
+sorted_sessions='tmux list-sessions -F "#{session_last_attached} #{session_name}#{?session_attached, attached,}" | sort -n | cut -d\  -f2- |'$highlight
 
 SESSION_VIEW="reload($sorted_sessions)"
 SESSION_VIEW+="+change-preview(tmux capture-pane -ep -t $selected_session)"
