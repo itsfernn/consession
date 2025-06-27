@@ -12,7 +12,6 @@ fzf_args=(
     '--print-query'
     '--padding=1'
     '--info=inline'
-    '--tac'
     '--scrollbar=▌▐'
     '--color=16,pointer:9,spinner:92,marker:46'
     '--pointer='
@@ -37,7 +36,7 @@ INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
 INFO+='[ -z "$si" ] && echo New Session: '$new_session_name
 
 highlight='sed '\''s/attached/[3m[90mattached[0m/'\'''
-sorted_sessions='tmux list-sessions -F "#{session_last_attached} #{session_name}#{?session_attached, attached,}" | sort -n | cut -d\  -f2- |'$highlight
+sorted_sessions='tmux list-sessions -F "#{session_last_attached} #{session_name}#{?session_attached, attached,}" | sort -rn | cut -d\  -f2- |'$highlight
 
 SESSION_VIEW="reload($sorted_sessions)"
 SESSION_VIEW+="+change-preview(tmux capture-pane -ep -t $selected_session)"
