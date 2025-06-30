@@ -29,7 +29,7 @@ list_sessions='tmux ls -F "#{session_name} #{session_windows} #{session_last_att
 selected_session='$(echo {} | cut -d\  -f1)'
 selected_session_old_name='$(tmux display-message -p -t '$selected_session' "#{pane_start_path}")'
 
-new_session_name='$(result=$(grep {} '$rename_file' | tail -n 1 | cut -f2); ([ -n $result ] && echo $result || echo {}) | sed '\''s/[\ .]/_/g'\'')'
+new_session_name='$(result=$(awk -F '\''\t'\'' -v q="$(echo $HOME/{})" '\'' $1 == q'\'' '$rename_file' | tail -n 1 | cut -f2); [[ -z "$result" ]] && result={}; echo $result | sed '\''s/[\ .]/_/g'\'')'
 
 INFO='si=$('$list_sessions'| grep -m1 '$selected_session');'
 INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
@@ -52,7 +52,7 @@ rename_selected_session+='tmux rename-session -t '$selected_session' $new_name;'
 RENAME_SESSION="execute($rename_selected_session)+reload($sorted_sessions)"
 
 list_dirs="zoxide query -l | sed 's|^/home/[a-z]*/||'"
-zoxide_preview='zoxide query {} | xargs eza -1 --group-directories-first --color=always --icons'
+zoxide_preview='eza -1 --group-directories-first --color=always --icons $HOME/{}'
 ZOXIDE_VIEW="reload($list_dirs)"
 ZOXIDE_VIEW+="+change-preview($zoxide_preview)"
 ZOXIDE_VIEW+="+change-border-label( 󰍉 CHOOSE DIRECTORY   )"
