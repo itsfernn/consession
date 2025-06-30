@@ -9,43 +9,37 @@
 
 ---
 
-**consession** is a **tmux session manager** powered by **fzf** and **zoxide**. It lists your existing tmux sessions for quick attachment and lets you create new sessions based on your most-used directories cached by zoxide.
+**consession** is a **tmux session manager** powered by **fzf** and **zoxide**.
+It effortlessly lets you create, switch, rename and kill sessions.
+It knows the directories you visit most often and remembers every time you rename a session.
 
 ---
 
 ## 🚀 Features
 
-- **List and attach** to open tmux sessions using fzf for fuzzy searching.
+- **Type and attach** fuzzy search over currly open tmux sessions.
 - **Create new sessions** automatically from your frequently used directories (via zoxide).
-- **Interactive preview** of session output and directory contents.
+- **Preview** of sessions and directory contents.
 - **Keybindings** for renaming and killing sessions directly from the fzf interface.
-- **Customizable** appearance and behavior through configuration variables.
+- **Persistent Names** for sessions associated with a particular directory.
 
 ![Screenshot of consession](demo.gif)
+
 ---
+
 
 ## 📦 Installation
 
-1. **Clone the repo**
+- **Run the following commands**
 
    ```bash
    git clone https://github.com/itsfernnn/consession.git
    cd consession
+   make install
    ```
 
-2. **Make it executable**
 
-   ```bash
-   chmod +x consession.sh
-   ```
-
-3. **Move to your PATH**
-
-   ```bash
-   mv consession.sh /usr/local/bin/consession
-   ```
-
-4. **Ensure dependencies are installed**
+- **Ensure dependencies are installed**
 
    - [tmux](https://github.com/tmux/tmux)
    - [fzf](https://github.com/junegunn/fzf)
@@ -65,7 +59,7 @@ consession
 By default, consession will:
 
 1. Show a fuzzy list of your current tmux sessions.
-2. Allow you to kill (`Ctrl-D`) or rename (`Ctrl-R`) any session.
+2. Allow you to kill (`Ctrl-X`) or rename (`Ctrl-R`) any session.
 3. Automatically switches to zoxide view when query does not match any existing session
 4. Switch back to the session view by pressing `Backspace` on an empty query.
 5. Switch to an existing session or create a new one in the selected directory by pressing `Enter`.
@@ -74,7 +68,7 @@ By default, consession will:
 
 | Action                 | Key Combination |
 | ---------------------- | --------------- |
-| Kill session           | Ctrl-D          |
+| Kill session           | Ctrl-X          |
 | Rename session         | Ctrl-R          |
 | Switch to zoxide view  | unique query    |
 | Reset to sessions view | backspace       |
