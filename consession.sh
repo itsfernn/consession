@@ -29,7 +29,7 @@ list_sessions='tmux ls -F "#{session_name} #{session_windows} #{session_last_att
 selected_session='$(echo {} | cut -d\  -f1)'
 selected_session_old_name='$(tmux display-message -p -t '$selected_session' "#{pane_start_path}")'
 
-new_session_name='$(result=$(awk -F '\''\t'\'' -v q="$(echo $HOME/{})" '\'' $1 == q'\'' '$rename_file' | tail -n 1 | cut -f2); [[ -z "$result" ]] && result={}; echo $result | sed '\''s/[\ .]/_/g'\'')'
+new_session_name='$(result=$(awk -F '\''\t'\'' -v q="$(echo $HOME/{})" '\'' $1 == q'\'' '$rename_file' | tail -n 1 | cut -f2); [[ -z "$result" ]] && result='$selected_session'; echo $result | sed '\''s/[\ .]/_/g'\'')'
 
 INFO='si=$('$list_sessions'| grep -m1 '$selected_session');'
 INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
@@ -66,28 +66,28 @@ bindings=(
     --bind "$rename_key:$RENAME_SESSION"
 )
 
-target=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
+selection=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
 
-if [[ -z "$target" ]]; then
+if [[ -z "$selection" ]]; then
     exit 0
 fi
 
-directory=$(zoxide query "$target")
-zoxide add "$directory" >/dev/null
+session_name=$(echo "$selection" | cut -d' ' -f1)
+directory="$HOME/$selection"
 
-if ! tmux has-session -t "$target"; then
-    matched_name=$(grep "$directory" "$rename_file" | tail -n 1 | cut -f2)
+if ! tmux has-session -t "$session_name"; then
+    matched_name=$(awk -F '\t' -v q="$directory" '$1 == q' $rename_file | tail -n 1 | cut -f2)
     if [[ -n $matched_name ]]; then
-        target=$matched_name
+        session_name=$matched_name
     else
-        target=$(echo "$directory" | sed 's|^/home/[a-z]*/||' | sed 's/[\ .]/_/g')
+        session_name=$(echo "$directory" | sed 's|^/home/[a-z]*/||' | sed 's/[\ .]/_/g')
     fi
 
-    tmux new-session -d -s "$target" -c "$directory"
+    tmux new-session -d -s "$session_name" -c "$directory"
 fi
 
 if [[ -z $TMUX ]]; then
-    tmux attach-session -t "$target"
+    tmux attach-session -t "$session_name"
 else
-    tmux switch-client -t "$target"
+    tmux switch-client -t "$session_name"
 fi
