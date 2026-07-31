@@ -34,7 +34,7 @@ format_session_info+=' echo; }'
 
 list_sessions='tmux ls -F "#{session_name} #{session_windows} #{session_last_attached}"'
 selected_session='$(echo {} | cut -d\  -f1)'
-new_session_name='$(basename "$(echo $HOME/{})" | tr " " "_")'
+new_session_name='$(basename "$(echo $HOME/{})" | tr " ." "_")'
 
 INFO='si=$('$list_sessions'| grep -m1 '$selected_session');'
 INFO+='[ -n "$si" ] && echo $si | '$format_session_info';'
@@ -50,8 +50,7 @@ SESSION_VIEW+="+change-preview(tmux capture-pane -ep -t $selected_session)"
 SESSION_VIEW+="+change-border-label( 󰍉 ACTIVE TMUX SESSIONS  )"
 SESSION_VIEW+="+change-header(󱩾 $zoxide_key • 󱘅 $kill_key)"
 
-kill_selected_session='tmux kill-session -t "'$selected_session'"'
-KILL_SESSION="execute-silent($kill_selected_session)+reload($sorted_sessions)"
+KILL_SESSION="execute-silent(echo {} > /tmp/consession_kill)+accept"
 
 # ─── zoxide directory view ───────────────────────────────────────────────────
 
@@ -76,7 +75,25 @@ bindings=(
 
 # ─── launch ──────────────────────────────────────────────────────────────────
 
-selection=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
+selection=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" | tail -n1)
+
+# ─── kill requested? ──────────────────────────────────────────────────────────
+
+if [[ -f /tmp/consession_kill ]]; then
+    target=$(cut -d' ' -f1 < /tmp/consession_kill)
+    rm -f /tmp/consession_kill
+
+    if [ -n "$TMUX" ] && [ "$(tmux display-message -p '#{session_name}')" = "$target" ]; then
+        if ! tmux switch-client -l 2>/dev/null; then
+            tmux kill-session -t "$target" 2>/dev/null
+            exit 0
+        fi
+    fi
+    tmux kill-session -t "$target" 2>/dev/null
+
+    exec "$0"
+    exit 0
+fi
 
 if [[ -z "$selection" ]]; then
   exit 0
@@ -88,16 +105,16 @@ directory="$HOME/$selection"
 # ─── create or attach ────────────────────────────────────────────────────────
 
 if ! tmux has-session -t "$session_name"; then
-  session_name=$(basename "$directory" | tr ' ' '_')
+  session_name=$(basename "$directory" | tr ' .' '_')
 
   if tmux has-session -t "$session_name" 2>/dev/null; then
     existing_dir=$(tmux display-message -p -t "$session_name" "#{pane_start_path}" 2>/dev/null)
     if [[ "$existing_dir" == "$directory" ]]; then
       :
     elif [[ -n "$existing_dir" ]]; then
-      existing_parent=$(basename "$(dirname "$existing_dir")")
-      existing_name="${existing_parent}/$(basename "$existing_dir" | tr ' ' '_')"
-      new_parent=$(basename "$(dirname "$directory")")
+      existing_parent=$(basename "$(dirname "$existing_dir")" | tr ' .' '_')
+      existing_name="${existing_parent}/$(basename "$existing_dir" | tr ' .' '_')"
+      new_parent=$(basename "$(dirname "$directory")" | tr ' .' '_')
 
       tmux rename-session -t "$session_name" "$existing_name" 2>/dev/null || true
       session_name="${new_parent}/${session_name}"
