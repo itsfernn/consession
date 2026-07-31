@@ -64,6 +64,7 @@ bindings=(
     --bind "backward-eof:$SESSION_VIEW"
     --bind "$kill_key:$KILL_SESSION"
     --bind "$rename_key:$RENAME_SESSION"
+    --bind "ctrl-n:$ZOXIDE_VIEW"
 )
 
 selection=$(fzf "${fzf_args[@]}" "${bindings[@]}" --info-command "$INFO" --tmux 100% | tail -n1)
